@@ -1,46 +1,195 @@
-// espServer UI JavaScript (MQTT version)
+// <script>
+// --- UI State ---
+let sidebarOpen = false;
+let currentTheme = localStorage.getItem('theme') || 'light';
 
-// Import secrets from a separate file (make sure to serve as a module)
+// --- MQTT Credentials (imported from secrets file) ---
 import { MQTT_BROKER, MQTT_USER, MQTT_PASS } from './mqtt_secrets.js';
 
-// Spinner SVG for animation
-const spinnerSVG = `<svg class="spin" width="18" height="18" viewBox="0 0 50 50" style="vertical-align:middle;">
-  <circle cx="25" cy="25" r="20" fill="none" stroke="#00b894" stroke-width="5" stroke-linecap="round" stroke-dasharray="31.4 31.4" transform="rotate(-90 25 25)">
-    <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/>
-  </circle>
-</svg>`;
+// --- MQTT Topics ---
+const RELAY1_STATE_TOPIC = 'home/relay1/state';
+const RELAY2_STATE_TOPIC = 'home/relay2/state';
+const RELAY1_SET_TOPIC = 'home/relay1/set';
+const RELAY2_SET_TOPIC = 'home/relay2/set';
 
-// Update connect button state only (not clickable)
-function updateConnectBtn(state) {
-    const btn = document.getElementById('connectBtn');
-    if (!btn) return;
-    btn.disabled = true;
-    if (state === 'connecting') {
-        btn.innerHTML = `${spinnerSVG} Connecting...`;
-        btn.style.background = 'linear-gradient(90deg,#fdcb6e 60%,#ffeaa7 100%)';
-    } else if (state === 'connected') {
-        btn.textContent = 'Connected';
-        btn.style.background = 'linear-gradient(90deg,#27ae60 60%,#00b894 100%)';
-    } else {
-        btn.textContent = 'Disconnected';
-        btn.style.background = 'linear-gradient(90deg,#e17055 60%,#d63031 100%)';
+// --- Theme Initialization ---
+document.addEventListener('DOMContentLoaded', function() {
+    applyTheme(currentTheme);
+});
+
+// --- Tab Switching ---
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+        tab.classList.remove('tab-active');
+        tab.classList.add('tab-inactive');
+    });
+    const tabContent = document.getElementById(tabName + '-content');
+    if (tabContent) tabContent.classList.remove('hidden');
+    const tab = document.getElementById(tabName + '-tab');
+    if (tab) {
+        tab.classList.remove('tab-inactive');
+        tab.classList.add('tab-active');
     }
-    // Also update the status label
-    updateConnectionLabel(state === 'connected');
+    const titles = {
+        'home': 'Home Dashboard',
+        'devices': 'Device Management',
+        'settings': 'Settings'
+    };
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle && titles[tabName]) {
+        pageTitle.textContent = titles[tabName];
+    }
+    if (window.innerWidth < 768) {
+        closeSidebar();
+    }
 }
 
-// Update connection label
-function updateConnectionLabel(isConnected) {
+// --- Sidebar ---
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const hamburger = document.getElementById('hamburger');
+    sidebarOpen = !sidebarOpen;
+    if (sidebarOpen) {
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
+        hamburger.classList.add('active');
+    } else {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+        hamburger.classList.remove('active');
+    }
+}
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const hamburger = document.getElementById('hamburger');
+    sidebarOpen = false;
+    if (sidebar) sidebar.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    if (hamburger) hamburger.classList.remove('active');
+}
+
+// --- Theme ---
+function toggleDarkMode() {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    applyTheme(currentTheme);
+    localStorage.setItem('theme', currentTheme);
+}
+function setTheme(theme) {
+    currentTheme = theme;
+    if (theme === 'auto') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        currentTheme = prefersDark ? 'dark' : 'light';
+    }
+    applyTheme(currentTheme);
+    localStorage.setItem('theme', theme);
+}
+function applyTheme(theme) {
+    const html = document.documentElement;
+    const body = document.body;
+    const themeIcon = document.getElementById('theme-icon');
+    if (theme === 'dark') {
+        html.classList.add('dark');
+        body.classList.add('dark');
+        if (themeIcon) themeIcon.textContent = '☀️';
+    } else {
+        html.classList.remove('dark');
+        body.classList.remove('dark');
+        if (themeIcon) themeIcon.textContent = '🌙';
+    }
+}
+
+// --- MQTT Logic ---
+let client;
+let relay1State = false;
+let relay2State = false;
+let mqttConnected = false;
+
+// Only run MQTT logic if mqtt.js is loaded
+if (typeof mqtt !== 'undefined') {
+    client = mqtt.connect(MQTT_BROKER, {
+        username: MQTT_USER,
+        password: MQTT_PASS,
+        clean: true,
+        connectTimeout: 4000,
+        reconnectPeriod: 4000
+    });
+
+    client.on('connect', () => {
+        mqttConnected = true;
+        updateConnectionDot();
+        client.subscribe([RELAY1_STATE_TOPIC, RELAY2_STATE_TOPIC]);
+    });
+
+    client.on('reconnect', () => {
+        mqttConnected = false;
+        updateConnectionDot();
+    });
+    client.on('offline', () => {
+        mqttConnected = false;
+        updateConnectionDot();
+    });
+    client.on('close', () => {
+        mqttConnected = false;
+        updateConnectionDot();
+    });
+    client.on('error', () => {
+        mqttConnected = false;
+        updateConnectionDot();
+    });
+
+    client.on('message', (topic, message) => {
+        const msg = message.toString();
+        if (topic === RELAY1_STATE_TOPIC) {
+            relay1State = (msg === 'ON');
+            updateRelayUI(1, relay1State);
+        }
+        if (topic === RELAY2_STATE_TOPIC) {
+            relay2State = (msg === 'ON');
+            updateRelayUI(2, relay2State);
+        }
+    });
+
+    // Relay toggle event listeners (publish to MQTT topics)
+    document.getElementById('relay1Btn').onclick = function() {
+        client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
+    };
+    document.getElementById('relay2Btn').onclick = function() {
+        client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
+    };
+}
+
+// --- UI Update Helpers ---
+function updateConnectionDot() {
+    const dot = document.getElementById('connection-dot');
+    const status = document.getElementById('connection-status');
+    if (dot) {
+        dot.classList.toggle('connected', mqttConnected);
+        dot.classList.toggle('disconnected', !mqttConnected);
+    }
+    if (status) {
+        status.textContent = mqttConnected ? 'MQTT Server Connected' : 'MQTT Server Disconnected';
+    }
     const label = document.getElementById('connectionStateLabel');
     if (label) {
-        label.textContent = isConnected ? 'Connected' : 'Disconnected';
-        label.style.color = isConnected ? '#27ae60' : '#e74c3c';
+        label.textContent = mqttConnected ? 'Connected' : 'Disconnected';
+        label.style.color = mqttConnected ? '#27ae60' : '#e74c3c';
     }
-    console.log('Connection label updated:', isConnected ? 'Connected' : 'Disconnected');
 }
 
-// Update relay state label
-function updateRelayStateLabel(relay, state) {
+function updateRelayUI(relay, state) {
+    const status = document.getElementById(`relay${relay}-status`);
+    const time = document.getElementById(`relay${relay}-time`);
+    const btn = document.getElementById(`relay${relay}Btn`);
+    if (status) status.textContent = state ? 'On' : 'Off';
+    if (time) time.textContent = new Date().toLocaleTimeString();
+    if (btn) {
+        btn.classList.toggle('active', state);
+    }
     const label = document.getElementById(`relay${relay}StateLabel`);
     if (label) {
         label.textContent = state ? 'ON' : 'OFF';
@@ -48,124 +197,18 @@ function updateRelayStateLabel(relay, state) {
     }
 }
 
-// Update relay button
-function updateRelayBtn(relay, state) {
-    const btn = document.getElementById(`relay${relay}Btn`);
-    if (btn) {
-        btn.textContent = `Relay ${relay} Toggle (${state ? 'ON' : 'OFF'})`;
-        btn.style.background = state ? 'linear-gradient(90deg,#27ae60 60%,#00b894 100%)' : '';
-    }
-    updateRelayStateLabel(relay, state);
-    console.log(`Relay ${relay} button updated:`, state ? 'ON' : 'OFF');
-}
-
-// MQTT topics
-const RELAY1_STATE_TOPIC = 'home/relay1/state';
-const RELAY2_STATE_TOPIC = 'home/relay2/state';
-const RELAY1_SET_TOPIC = 'home/relay1/set';
-const RELAY2_SET_TOPIC = 'home/relay2/set';
-
-// Check if mqtt is loaded
-if (typeof mqtt === 'undefined') {
-    console.error('MQTT.js is not loaded! Make sure <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script> is included in your HTML.');
-} else {
-    console.log('MQTT.js loaded.');
-}
-
-// On page load, set connection label and button to disconnected
-window.onload = function() {
-    updateConnectBtn('disconnected');
-    console.log('Window loaded, initial connection label set.');
-};
-
-// Connect to MQTT broker
-updateConnectBtn('connecting');
-const client = mqtt.connect(MQTT_BROKER, {
-    username: MQTT_USER,
-    password: MQTT_PASS,
-    clean: true,
-    connectTimeout: 4000,
-    reconnectPeriod: 4000
-});
-
-client.on('connect', () => {
-    console.log('MQTT connected!');
-    client.subscribe([RELAY1_STATE_TOPIC, RELAY2_STATE_TOPIC], (err) => {
-        if (err) {
-            console.error('Subscription error:', err);
-        } else {
-            console.log('Subscribed to relay state topics.');
-        }
-    });
-    updateConnectBtn('connected');
-});
-
-client.on('reconnect', () => {
-    console.log('MQTT reconnecting...');
-    updateConnectBtn('connecting');
-});
-client.on('offline', () => {
-    console.log('MQTT offline.');
-    updateConnectBtn('disconnected');
-});
-client.on('close', () => {
-    console.log('MQTT connection closed.');
-    updateConnectBtn('disconnected');
-});
-client.on('error', (err) => {
-    console.error('MQTT error:', err);
-    updateConnectBtn('disconnected');
-});
-
-// Handle incoming relay state messages
-client.on('message', (topic, message) => {
-    const msg = message.toString();
-    console.log('MQTT message received:', topic, msg);
-    if (topic === RELAY1_STATE_TOPIC) {
-        updateRelayBtn(1, msg === 'ON');
-    }
-    if (topic === RELAY2_STATE_TOPIC) {
-        updateRelayBtn(2, msg === 'ON');
+// --- Responsive Sidebar ---
+window.addEventListener('resize', function() {
+    if (window.innerWidth >= 768) {
+        closeSidebar();
     }
 });
 
-// Button handlers
-document.getElementById('relay1Btn').onclick = function() {
-    console.log('Relay 1 button clicked. Publishing TOGGLE.');
-    client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
-};
-document.getElementById('relay2Btn').onclick = function() {
-    console.log('Relay 2 button clicked. Publishing TOGGLE.');
-    client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
-};
-
-// --- UI/Theme/Sidebar logic (optional, add as needed) ---
-
-// Example: Theme toggle (if you have a theme button with id 'theme-icon')
-const themeIcon = document.getElementById('theme-icon');
-if (themeIcon) {
-    themeIcon.onclick = function() {
-        const html = document.documentElement;
-        const body = document.body;
-        const isDark = html.classList.contains('dark');
-        if (isDark) {
-            html.classList.remove('dark');
-            body.classList.remove('dark');
-            themeIcon.textContent = '🌙';
-            localStorage.setItem('theme', 'light');
-        } else {
-            html.classList.add('dark');
-            body.classList.add('dark');
-            themeIcon.textContent = '☀️';
-            localStorage.setItem('theme', 'dark');
-        }
-    };
-    // On load, set theme from localStorage
-    if (localStorage.getItem('theme') === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.body.classList.add('dark');
-        themeIcon.textContent = '☀️';
-    } else {
-        themeIcon.textContent = '🌙';
+// --- System Theme Change ---
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    if (localStorage.getItem('theme') === 'auto') {
+        currentTheme = e.matches ? 'dark' : 'light';
+        applyTheme(currentTheme);
     }
-}
+});
+// </script>
