@@ -234,4 +234,6 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
 window.switchTab = switchTab;
 window.toggleDarkMode = toggleDarkMode;
 window.setTheme = setTheme;
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
 // </script>
