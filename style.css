@@ -131,7 +131,7 @@ body.dark-mode .navbar {
 .sidebar-menu li:hover {
     color: #3a86ff;
     border-left: 3px solid #3a86ff;
-    background: #23294622;
+    background: #e8f0fe; /* subtle blue background for light mode */
     border-radius: 0 18px 18px 0;
     margin-right: 12px;
     padding-right: 16px;
