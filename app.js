@@ -10,7 +10,17 @@ const spinnerSVG = `<svg class="spin" width="18" height="18" viewBox="0 0 50 50"
   </circle>
 </svg>`;
 
-// Update connect button state only (not clickable)
+// MQTT topics
+const RELAY1_STATE_TOPIC = 'home/relay1/state';
+const RELAY2_STATE_TOPIC = 'home/relay2/state';
+const RELAY1_SET_TOPIC = 'home/relay1/set';
+const RELAY2_SET_TOPIC = 'home/relay2/set';
+
+// UI State
+let relay1State = false;
+let relay2State = false;
+
+// --- UI Update Functions ---
 function updateConnectBtn(state) {
     const btn = document.getElementById('connectBtn');
     if (!btn) return;
@@ -25,21 +35,17 @@ function updateConnectBtn(state) {
         btn.textContent = 'Disconnected';
         btn.style.background = 'linear-gradient(90deg,#e17055 60%,#d63031 100%)';
     }
-    // Also update the status label
     updateConnectionLabel(state === 'connected');
 }
 
-// Update connection label
 function updateConnectionLabel(isConnected) {
     const label = document.getElementById('connectionStateLabel');
     if (label) {
         label.textContent = isConnected ? 'Connected' : 'Disconnected';
         label.style.color = isConnected ? '#27ae60' : '#e74c3c';
     }
-    console.log('Connection label updated:', isConnected ? 'Connected' : 'Disconnected');
 }
 
-// Update relay state label
 function updateRelayStateLabel(relay, state) {
     const label = document.getElementById(`relay${relay}StateLabel`);
     if (label) {
@@ -48,7 +54,6 @@ function updateRelayStateLabel(relay, state) {
     }
 }
 
-// Update relay button
 function updateRelayBtn(relay, state) {
     const btn = document.getElementById(`relay${relay}Btn`);
     if (btn) {
@@ -56,85 +61,69 @@ function updateRelayBtn(relay, state) {
         btn.style.background = state ? 'linear-gradient(90deg,#27ae60 60%,#00b894 100%)' : '';
     }
     updateRelayStateLabel(relay, state);
-    console.log(`Relay ${relay} button updated:`, state ? 'ON' : 'OFF');
 }
 
-// MQTT topics
-const RELAY1_STATE_TOPIC = 'home/relay1/state';
-const RELAY2_STATE_TOPIC = 'home/relay2/state';
-const RELAY1_SET_TOPIC = 'home/relay1/set';
-const RELAY2_SET_TOPIC = 'home/relay2/set';
-
-// Check if mqtt is loaded
+// --- MQTT Setup ---
 if (typeof mqtt === 'undefined') {
     console.error('MQTT.js is not loaded! Make sure <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script> is included in your HTML.');
 } else {
-    console.log('MQTT.js loaded.');
-}
+    // On page load, set connection label and button to disconnected
+    window.onload = function() {
+        updateConnectBtn('disconnected');
+    };
 
-// On page load, set connection label and button to disconnected
-window.onload = function() {
-    updateConnectBtn('disconnected');
-    console.log('Window loaded, initial connection label set.');
-};
+    // Connect to MQTT broker
+    updateConnectBtn('connecting');
+    const client = mqtt.connect(MQTT_BROKER, {
+        username: MQTT_USER,
+        password: MQTT_PASS,
+        clean: true,
+        connectTimeout: 4000,
+        reconnectPeriod: 4000
+    });
 
-// Connect to MQTT broker
-updateConnectBtn('connecting');
-const client = mqtt.connect(MQTT_BROKER, {
-    username: MQTT_USER,
-    password: MQTT_PASS,
-    clean: true,
-    connectTimeout: 4000,
-    reconnectPeriod: 4000
-});
+    client.on('connect', () => {
+        client.subscribe([RELAY1_STATE_TOPIC, RELAY2_STATE_TOPIC], (err) => {
+            if (err) {
+                console.error('Subscription error:', err);
+            }
+        });
+        updateConnectBtn('connected');
+    });
 
-client.on('connect', () => {
-    console.log('MQTT connected!');
-    client.subscribe([RELAY1_STATE_TOPIC, RELAY2_STATE_TOPIC], (err) => {
-        if (err) {
-            console.error('Subscription error:', err);
-        } else {
-            console.log('Subscribed to relay state topics.');
+    client.on('reconnect', () => {
+        updateConnectBtn('connecting');
+    });
+    client.on('offline', () => {
+        updateConnectBtn('disconnected');
+    });
+    client.on('close', () => {
+        updateConnectBtn('disconnected');
+    });
+    client.on('error', (err) => {
+        updateConnectBtn('disconnected');
+    });
+
+    // Handle incoming relay state messages
+    client.on('message', (topic, message) => {
+        const msg = message.toString();
+        if (topic === RELAY1_STATE_TOPIC) {
+            relay1State = (msg === 'ON');
+            updateRelayBtn(1, relay1State);
+        }
+        if (topic === RELAY2_STATE_TOPIC) {
+            relay2State = (msg === 'ON');
+            updateRelayBtn(2, relay2State);
         }
     });
-    updateConnectBtn('connected');
-});
 
-client.on('reconnect', () => {
-    console.log('MQTT reconnecting...');
-    updateConnectBtn('connecting');
-});
-client.on('offline', () => {
-    console.log('MQTT offline.');
-    updateConnectBtn('disconnected');
-});
-client.on('close', () => {
-    console.log('MQTT connection closed.');
-    updateConnectBtn('disconnected');
-});
-client.on('error', (err) => {
-    console.error('MQTT error:', err);
-    updateConnectBtn('disconnected');
-});
+    // Button handlers
+    document.getElementById('relay1Btn').onclick = function() {
+        client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
+    };
+    document.getElementById('relay2Btn').onclick = function() {
+        client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
+    };
+}
 
-// Handle incoming relay state messages
-client.on('message', (topic, message) => {
-    const msg = message.toString();
-    console.log('MQTT message received:', topic, msg);
-    if (topic === RELAY1_STATE_TOPIC) {
-        updateRelayBtn(1, msg === 'ON');
-    }
-    if (topic === RELAY2_STATE_TOPIC) {
-        updateRelayBtn(2, msg === 'ON');
-    }
-});
-
-// Button handlers
-document.getElementById('relay1Btn').onclick = function() {
-    console.log('Relay 1 button clicked. Publishing TOGGLE.');
-    client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
-};
-document.getElementById('relay2Btn').onclick = function() {
-    console.log('Relay 2 button clicked. Publishing TOGGLE.');
-    client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
-};
+// --- (Optional) Add your theme/sidebar/tab logic here as needed ---

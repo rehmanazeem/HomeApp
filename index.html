@@ -3,77 +3,387 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>espServer Web UI</title>
+    <title>Smart Home Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="sidebar-logo" style="display: flex; align-items: center; justify-content: flex-start; padding: 28px 0 32px 0; gap: 18px;">
-                <img src="logo.svg" alt="HomeApp Logo" class="logo-img" style="height: 44px; width: auto; display: block;" />
+<body class="bg-gray-50 dark:bg-gray-900 h-screen flex transition-colors duration-300">
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay md:hidden" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    
+    <!-- Sidebar -->
+    <div class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col fixed md:relative h-full z-50 mobile-sidebar md:transform-none transition-colors duration-300" id="sidebar">
+        <!-- Header -->
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">🏠</span>
+                </div>
+                <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Smart Home</h1>
             </div>
-            <ul class="sidebar-menu">
-                <li class="tab active" data-tab="home">Home</li>
-                <li class="tab" data-tab="devices">Devices</li>
-            </ul>
-            <div class="sidebar-footer">
-                <label class="switch">
-                    <input type="checkbox" id="darkModeToggle">
-                    <span class="slider"></span>
-                </label>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <nav class="flex-1 p-4">
+            <div class="space-y-2">
+                <button onclick="switchTab('home')" id="home-tab" class="w-full text-left px-3 py-2 rounded-lg transition-colors tab-active">
+                    <div class="flex items-center space-x-3">
+                        <span>🏠</span>
+                        <span class="font-medium">Home</span>
+                    </div>
+                </button>
+                <button onclick="switchTab('devices')" id="devices-tab" class="w-full text-left px-3 py-2 rounded-lg transition-colors tab-inactive">
+                    <div class="flex items-center space-x-3">
+                        <span>📱</span>
+                        <span class="font-medium">Devices</span>
+                    </div>
+                </button>
+                <button onclick="switchTab('settings')" id="settings-tab" class="w-full text-left px-3 py-2 rounded-lg transition-colors tab-inactive">
+                    <div class="flex items-center space-x-3">
+                        <span>⚙️</span>
+                        <span class="font-medium">Settings</span>
+                    </div>
+                </button>
             </div>
-        </aside>
-        <main class="main">
-            <section class="tab-content" id="homeTab" style="display:block;">
-                <h2 style="margin-bottom: 24px;">Overall Status</h2>
-                <div class="status-panel rounded-frame">
-                    <div class="status-row">
-                        <span class="status-label">Connection:</span>
-                        <span id="connectionStateLabel" class="status-value">Unknown</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Relay 1:</span>
-                        <span id="relay1StateLabel" class="status-value">Unknown</span>
-                        <button class="btn device-btn" id="relay1Btn">Toggle</button>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Relay 2:</span>
-                        <span id="relay2StateLabel" class="status-value">Unknown</span>
-                        <button class="btn device-btn" id="relay2Btn">Toggle</button>
+        </nav>
+        
+        <!-- Footer -->
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+                Version 1.0.0
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col md:ml-0 ml-0">
+        <!-- Top Bar with Connection Status -->
+        <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors duration-300">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <!-- Hamburger Menu (Mobile) -->
+                    <button class="md:hidden hamburger text-gray-600 dark:text-gray-300" onclick="toggleSidebar()" id="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <h2 id="page-title" class="text-xl font-semibold text-gray-900 dark:text-white">Home Dashboard</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Dark Mode Toggle -->
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <span id="theme-icon">🌙</span>
+                    </button>
+                    <!-- Connection Status -->
+                    <div class="flex items-center space-x-2">
+                        <div class="connection-dot connected" id="connection-dot"></div>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline" id="connection-status">MQTT Server Connected</span>
                     </div>
                 </div>
-            </section>
-            <section class="tab-content" id="devicesTab" style="display:none;">
-                <!-- Devices tab content will go here -->
-            </section>
+            </div>
+        </header>
+        
+        <!-- Content Area -->
+        <main class="flex-1 p-4 md:p-6">
+            <!-- Home Tab Content -->
+            <div id="home-content" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 max-w-4xl">
+                    <!-- Relay 1 Widget -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🔌</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900 dark:text-white">Relay One</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400" id="relay1-status">Off</p>
+                                </div>
+                            </div>
+                            <div class="toggle-switch" onclick="toggleRelay(1, this)" id="relay1-toggle">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            Last updated: <span id="relay1-time">Never</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Relay 2 Widget -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                    <span class="text-2xl">🔌</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900 dark:text-white">Relay Two</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400" id="relay2-status">Off</p>
+                                </div>
+                            </div>
+                            <div class="toggle-switch" onclick="toggleRelay(2, this)" id="relay2-toggle">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            Last updated: <span id="relay2-time">Never</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Devices Tab Content -->
+            <div id="devices-content" class="tab-content hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Device Management</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div>
+                                <div class="font-medium text-gray-900 dark:text-white">Relay Controller</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">2 relays connected</div>
+                            </div>
+                            <div class="text-green-600 text-sm font-medium">Online</div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div>
+                                <div class="font-medium text-gray-900 dark:text-white">MQTT Broker</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Message broker</div>
+                            </div>
+                            <div class="text-green-600 text-sm font-medium">Connected</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Tab Content -->
+            <div id="settings-content" class="tab-content hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Settings</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">MQTT Server</label>
+                            <input type="text" value="192.168.1.100:1883" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Update Interval</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>1 second</option>
+                                <option>5 seconds</option>
+                                <option>10 seconds</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Theme</label>
+                            <div class="flex items-center space-x-4">
+                                <button onclick="setTheme('light')" class="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                    ☀️ Light
+                                </button>
+                                <button onclick="setTheme('dark')" class="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                    🌙 Dark
+                                </button>
+                                <button onclick="setTheme('auto')" class="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                    🔄 Auto
+                                </button>
+                            </div>
+                        </div>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
+    
     <script>
-    // Sidebar tab switching and dark mode logic
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
-            if (this.dataset.tab === 'home') {
-                document.getElementById('homeTab').style.display = 'block';
-            } else if (this.dataset.tab === 'devices') {
-                document.getElementById('devicesTab').style.display = 'block';
+        let relay1State = false;
+        let relay2State = false;
+        let mqttConnected = true;
+        let sidebarOpen = false;
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            applyTheme(currentTheme);
+        });
+        
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+                tab.classList.remove('tab-active');
+                tab.classList.add('tab-inactive');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+            
+            // Add active class to selected tab
+            document.getElementById(tabName + '-tab').classList.remove('tab-inactive');
+            document.getElementById(tabName + '-tab').classList.add('tab-active');
+            
+            // Update page title
+            const titles = {
+                'home': 'Home Dashboard',
+                'devices': 'Device Management',
+                'settings': 'Settings'
+            };
+            document.getElementById('page-title').textContent = titles[tabName];
+            
+            // Close sidebar on mobile after tab selection
+            if (window.innerWidth < 768) {
+                closeSidebar();
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const hamburger = document.getElementById('hamburger');
+            
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+                hamburger.classList.add('active');
+            } else {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                hamburger.classList.remove('active');
+            }
+        }
+        
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const hamburger = document.getElementById('hamburger');
+            
+            sidebarOpen = false;
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            hamburger.classList.remove('active');
+        }
+        
+        function toggleDarkMode() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(currentTheme);
+            localStorage.setItem('theme', currentTheme);
+        }
+        
+        function setTheme(theme) {
+            currentTheme = theme;
+            if (theme === 'auto') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                currentTheme = prefersDark ? 'dark' : 'light';
+            }
+            applyTheme(currentTheme);
+            localStorage.setItem('theme', theme);
+        }
+        
+        function applyTheme(theme) {
+            const html = document.documentElement;
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                body.classList.add('dark');
+                themeIcon.textContent = '☀️';
+            } else {
+                html.classList.remove('dark');
+                body.classList.remove('dark');
+                themeIcon.textContent = '🌙';
+            }
+        }
+        
+        function toggleRelay(relayNumber, toggleElement) {
+            const isActive = toggleElement.classList.contains('active');
+            const newState = !isActive;
+            
+            // Update toggle visual state
+            if (newState) {
+                toggleElement.classList.add('active');
+            } else {
+                toggleElement.classList.remove('active');
+            }
+            
+            // Update relay state
+            if (relayNumber === 1) {
+                relay1State = newState;
+                document.getElementById('relay1-status').textContent = newState ? 'On' : 'Off';
+                document.getElementById('relay1-time').textContent = new Date().toLocaleTimeString();
+            } else {
+                relay2State = newState;
+                document.getElementById('relay2-status').textContent = newState ? 'On' : 'Off';
+                document.getElementById('relay2-time').textContent = new Date().toLocaleTimeString();
+            }
+            
+            // Simulate MQTT message sending
+            console.log(`Sending MQTT command: relay${relayNumber} = ${newState ? 'ON' : 'OFF'}`);
+            
+            // Simulate brief connection activity
+            simulateConnectionActivity();
+        }
+        
+        function simulateConnectionActivity() {
+            const dot = document.getElementById('connection-dot');
+            const status = document.getElementById('connection-status');
+            
+            // Brief "sending" state
+            dot.style.background = '#f59e0b';
+            if (status) status.textContent = 'MQTT Server Sending...';
+            
+            setTimeout(() => {
+                dot.style.background = '#10b981';
+                if (status) status.textContent = 'MQTT Server Connected';
+            }, 500);
+        }
+        
+        // Simulate connection status changes
+        function toggleConnection() {
+            mqttConnected = !mqttConnected;
+            const dot = document.getElementById('connection-dot');
+            const status = document.getElementById('connection-status');
+            
+            if (mqttConnected) {
+                dot.classList.remove('disconnected');
+                dot.classList.add('connected');
+                if (status) status.textContent = 'MQTT Server Connected';
+            } else {
+                dot.classList.remove('connected');
+                dot.classList.add('disconnected');
+                if (status) status.textContent = 'MQTT Server Disconnected';
+            }
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                closeSidebar();
             }
         });
-    });
-    darkModeToggle.addEventListener('change', function() {
-        document.body.classList.toggle('dark-mode', this.checked);
-        localStorage.setItem('darkMode', this.checked);
-    });
-    // Persist dark mode
-    if (localStorage.getItem('darkMode') === 'true') {
-        document.body.classList.add('dark-mode');
-        darkModeToggle.checked = true;
-    }
+        
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            if (localStorage.getItem('theme') === 'auto') {
+                currentTheme = e.matches ? 'dark' : 'light';
+                applyTheme(currentTheme);
+            }
+        });
+        
+        // Simulate periodic connection check (for demo purposes)
+        setInterval(() => {
+            // Randomly simulate connection issues (very rarely)
+            if (Math.random() < 0.02) {
+                toggleConnection();
+                setTimeout(toggleConnection, 2000); // Reconnect after 2 seconds
+            }
+        }, 5000);
     </script>
-    <script type="module" src="app.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9777771104989f28',t:'MTc1NjU5MDIyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
