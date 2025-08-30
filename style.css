@@ -68,7 +68,7 @@ body.dark-mode .navbar {
     transition: all 0.3s ease;
 }
 .toggle-switch.active {
-    background: #10b981;
+    background: #10b981 !important;
 }
 .toggle-knob {
     position: absolute;
