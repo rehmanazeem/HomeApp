@@ -127,10 +127,15 @@ body.dark-mode .navbar {
     border-left: 3px solid transparent;
     transition: color 0.2s, border 0.2s;
 }
-.sidebar-menu li.active, .sidebar-menu li:hover {
+.sidebar-menu li.active,
+.sidebar-menu li:hover {
     color: #3a86ff;
     border-left: 3px solid #3a86ff;
-    background: #23294611;
+    background: #23294622;
+    border-radius: 0 18px 18px 0;
+    margin-right: 12px;
+    padding-right: 16px;
+    transition: background 0.2s, color 0.2s, border 0.2s;
 }
 .sidebar-footer {
     margin-top: auto;
@@ -142,9 +147,11 @@ body.dark-mode .sidebar {
     background: #181a20;
     color: #f4f6fa;
 }
-body.dark-mode .sidebar-menu li.active, body.dark-mode .sidebar-menu li:hover {
+body.dark-mode .sidebar-menu li.active,
+body.dark-mode .sidebar-menu li:hover {
     color: #00b4d8;
     border-left: 3px solid #00b4d8;
+    background: #181a2033;
 }
 .main {
     flex: 1;
