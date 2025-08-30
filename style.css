@@ -129,12 +129,12 @@ body.dark-mode .navbar {
 }
 .sidebar-menu li.active,
 .sidebar-menu li:hover {
-    color: #3a86ff;
-    border-left: 3px solid #3a86ff;
-    background: #23294622;
-    border-radius: 0 18px 18px 0;
+    color: #00b4d8;
+    border-left: 3px solid #00b4d8;
+    background: #181a2033;
+    /* border-radius: 0 18px 18px 0;
     margin-right: 12px;
-    padding-right: 16px;
+    padding-right: 16px; */
     /* transition: background 0.2s, color 0.2s, border 0.2s; */
 }
 .sidebar-footer {
