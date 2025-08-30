@@ -229,4 +229,9 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
         applyTheme(currentTheme);
     }
 });
+
+// Make tab/theme functions globally accessible for HTML onclick handlers
+window.switchTab = switchTab;
+window.toggleDarkMode = toggleDarkMode;
+window.setTheme = setTheme;
 // </script>
