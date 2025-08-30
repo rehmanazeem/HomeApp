@@ -8,48 +8,62 @@
 </head>
 <body>
     <div class="app-container">
-        <nav class="navbar">
-            <div class="navbar-title">HomeApp</div>
-            <div class="navbar-actions">
-                <div class="connection-status">
-                    <span id="connectionStateLabel">Unknown</span>
-                </div>
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="logo.png" alt="HomeApp Logo" class="logo-img" />
+                <span class="logo-text">HomeApp</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="tab active" data-tab="home">Home</li>
+                <li class="tab" data-tab="devices">Devices</li>
+            </ul>
+            <div class="sidebar-footer">
                 <label class="switch">
                     <input type="checkbox" id="darkModeToggle">
                     <span class="slider"></span>
                 </label>
             </div>
-        </nav>
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>Home</h2>
-            </div>
-            <ul class="sidebar-menu">
-                <li class="active">Devices</li>
-            </ul>
-            <div class="sidebar-footer">v1.0</div>
         </aside>
         <main class="main">
-            <section class="devices-section">
-                <h3>Devices</h3>
-                <ul class="device-list" id="deviceList">
-                    <li>
-                        <span>Relay 1</span>
-                        <span id="relay1StateLabel" class="device-status">Unknown</span>
+            <section class="tab-content" id="homeTab" style="display:block;">
+                <h2>Overall Status</h2>
+                <div class="status-panel">
+                    <div class="status-row">
+                        <span class="status-label">Connection:</span>
+                        <span id="connectionStateLabel" class="status-value">Unknown</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Relay 1:</span>
+                        <span id="relay1StateLabel" class="status-value">Unknown</span>
                         <button class="btn device-btn" id="relay1Btn">Toggle</button>
-                    </li>
-                    <li>
-                        <span>Relay 2</span>
-                        <span id="relay2StateLabel" class="device-status">Unknown</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Relay 2:</span>
+                        <span id="relay2StateLabel" class="status-value">Unknown</span>
                         <button class="btn device-btn" id="relay2Btn">Toggle</button>
-                    </li>
-                </ul>
+                    </div>
+                </div>
+            </section>
+            <section class="tab-content" id="devicesTab" style="display:none;">
+                <!-- Devices tab content will go here -->
             </section>
         </main>
     </div>
     <script>
-    // Dark mode toggle
+    // Sidebar tab switching and dark mode logic
     const darkModeToggle = document.getElementById('darkModeToggle');
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+            if (this.dataset.tab === 'home') {
+                document.getElementById('homeTab').style.display = 'block';
+            } else if (this.dataset.tab === 'devices') {
+                document.getElementById('devicesTab').style.display = 'block';
+            }
+        });
+    });
     darkModeToggle.addEventListener('change', function() {
         document.body.classList.toggle('dark-mode', this.checked);
         localStorage.setItem('darkMode', this.checked);
@@ -60,8 +74,6 @@
         darkModeToggle.checked = true;
     }
     </script>
-    <script type="module" src="app.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script type="module" src="app.js"></script>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </body>
