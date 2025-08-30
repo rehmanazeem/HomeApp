@@ -264,9 +264,26 @@ body.dark-mode .device-status {
 }
 @media (max-width: 700px) {
     .app-container { flex-direction: column; }
-    .navbar { position: static; }
-    .sidebar { flex-direction: row; width: 100%; min-width: 0; height: auto; box-shadow: none; padding: 0; }
-    .sidebar-header, .sidebar-footer, .sidebar-menu { padding: 0 8px; }
-    .main { margin-left: 0; margin-top: 0; padding: 8px 2px; }
-    .devices-section { padding: 8px 2px; }
+    .navbar {
+        display: none;
+    }
+    .sidebar {
+        flex-direction: row;
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        box-shadow: none;
+        padding: 0;
+    }
+    .sidebar-header, .sidebar-footer, .sidebar-menu {
+        padding: 0 8px;
+    }
+    .main {
+        margin-left: 0;
+        margin-top: 0;
+        padding: 8px 2px;
+    }
+    .devices-section {
+        padding: 8px 2px;
+    }
 }
