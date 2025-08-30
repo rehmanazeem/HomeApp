@@ -155,12 +155,29 @@ if (typeof mqtt !== 'undefined') {
     });
 
     // Relay toggle event listeners (publish to MQTT topics)
-    document.getElementById('relay1Btn').onclick = function() {
-        client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
-    };
-    document.getElementById('relay2Btn').onclick = function() {
-        client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
-    };
+    const relay1Btn = document.getElementById('relay1Btn');
+    const relay2Btn = document.getElementById('relay2Btn');
+
+    if (relay1Btn) {
+        relay1Btn.onclick = function() {
+            client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
+        };
+        relay1Btn.onkeydown = function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
+            }
+        };
+    }
+    if (relay2Btn) {
+        relay2Btn.onclick = function() {
+            client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
+        };
+        relay2Btn.onkeydown = function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
+            }
+        };
+    }
 }
 
 // --- UI Update Helpers ---
@@ -189,6 +206,7 @@ function updateRelayUI(relay, state) {
     if (time) time.textContent = new Date().toLocaleTimeString();
     if (btn) {
         btn.classList.toggle('active', state);
+        btn.setAttribute('aria-pressed', state ? 'true' : 'false');
     }
     const label = document.getElementById(`relay${relay}StateLabel`);
     if (label) {
