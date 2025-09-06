@@ -160,21 +160,25 @@ if (typeof mqtt !== 'undefined') {
 
     if (relay1Btn) {
         relay1Btn.onclick = function() {
-            client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
+            const command = relay1State ? 'OFF' : 'ON';
+            client.publish(RELAY1_SET_TOPIC, command);
         };
         relay1Btn.onkeydown = function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
-                client.publish(RELAY1_SET_TOPIC, 'TOGGLE');
+                const command = relay1State ? 'OFF' : 'ON';
+                client.publish(RELAY1_SET_TOPIC, command);
             }
         };
     }
     if (relay2Btn) {
         relay2Btn.onclick = function() {
-            client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
+            const command = relay2State ? 'OFF' : 'ON';
+            client.publish(RELAY2_SET_TOPIC, command);
         };
         relay2Btn.onkeydown = function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
-                client.publish(RELAY2_SET_TOPIC, 'TOGGLE');
+                const command = relay2State ? 'OFF' : 'ON';
+                client.publish(RELAY2_SET_TOPIC, command);
             }
         };
     }
