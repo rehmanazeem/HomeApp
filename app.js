@@ -12,6 +12,10 @@ const RELAY2_STATE_TOPIC = 'home/relay2/state';
 const RELAY1_SET_TOPIC = 'home/relay1/set';
 const RELAY2_SET_TOPIC = 'home/relay2/set';
 
+// --- Added Strip Topics ---
+const STRIP_STATE_TOPIC = 'home/strip/state';
+const STRIP_SET_TOPIC = 'home/strip/set';
+
 // --- Theme Initialization ---
 document.addEventListener('DOMContentLoaded', function() {
     applyTheme(currentTheme);
@@ -107,6 +111,7 @@ function applyTheme(theme) {
 let client;
 let relay1State = false;
 let relay2State = false;
+let stripState = false;
 let mqttConnected = false;
 
 // Only run MQTT logic if mqtt.js is loaded
@@ -122,7 +127,7 @@ if (typeof mqtt !== 'undefined') {
     client.on('connect', () => {
         mqttConnected = true;
         updateConnectionDot();
-        client.subscribe([RELAY1_STATE_TOPIC, RELAY2_STATE_TOPIC]);
+        client.subscribe([RELAY1_STATE_TOPIC, RELAY2_STATE_TOPIC, STRIP_STATE_TOPIC]);
     });
 
     client.on('reconnect', () => {
@@ -152,11 +157,16 @@ if (typeof mqtt !== 'undefined') {
             relay2State = (msg === 'ON');
             updateRelayUI(2, relay2State);
         }
+        if (topic === STRIP_STATE_TOPIC) {
+            stripState = (msg === 'ON');
+            updateStripUI(stripState);
+        }
     });
 
     // Relay toggle event listeners (publish to MQTT topics)
     const relay1Btn = document.getElementById('relay1Btn');
     const relay2Btn = document.getElementById('relay2Btn');
+    const stripBtn = document.getElementById('stripBtn');
 
     if (relay1Btn) {
         relay1Btn.onclick = function() {
@@ -182,6 +192,35 @@ if (typeof mqtt !== 'undefined') {
             }
         };
     }
+    // --- Strip Switch Logic ---
+    if (stripBtn) {
+        stripBtn.onclick = function() {
+            const command = stripState ? 'OFF' : 'ON';
+            client.publish(STRIP_SET_TOPIC, command);
+        };
+        stripBtn.onkeydown = function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const command = stripState ? 'OFF' : 'ON';
+                client.publish(STRIP_SET_TOPIC, command);
+            }
+        };
+    }
+
+    // --- Color Tiles Logic ---
+    const colorCommands = ['red', 'white', 'cyan', 'magenta', 'green', 'blue'];
+    colorCommands.forEach(color => {
+        const tile = document.getElementById(`color-tile-${color}`);
+        if (tile) {
+            tile.onclick = function() {
+                client.publish(STRIP_SET_TOPIC, color);
+            };
+            tile.onkeydown = function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    client.publish(STRIP_SET_TOPIC, color);
+                }
+            };
+        }
+    });
 }
 
 // --- UI Update Helpers ---
@@ -213,6 +252,24 @@ function updateRelayUI(relay, state) {
         btn.setAttribute('aria-pressed', state ? 'true' : 'false');
     }
     const label = document.getElementById(`relay${relay}StateLabel`);
+    if (label) {
+        label.textContent = state ? 'ON' : 'OFF';
+        label.style.color = state ? '#27ae60' : '#e74c3c';
+    }
+}
+
+// --- Strip UI Update Helper ---
+function updateStripUI(state) {
+    const status = document.getElementById('strip-status');
+    const time = document.getElementById('strip-time');
+    const btn = document.getElementById('stripBtn');
+    if (status) status.textContent = state ? 'On' : 'Off';
+    if (time) time.textContent = new Date().toLocaleTimeString();
+    if (btn) {
+        btn.classList.toggle('active', state);
+        btn.setAttribute('aria-pressed', state ? 'true' : 'false');
+    }
+    const label = document.getElementById('stripStateLabel');
     if (label) {
         label.textContent = state ? 'ON' : 'OFF';
         label.style.color = state ? '#27ae60' : '#e74c3c';
