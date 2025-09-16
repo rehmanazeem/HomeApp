@@ -39,6 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 client.publish(STRIP_SET_TOPIC, rgbCmd);
             }
         });
+    } else {
+        console.error("Iro.js not loaded!");
     }
 });
 
