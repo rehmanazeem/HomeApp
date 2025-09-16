@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         colorWheel.on('color:change', function(color) {
-            // Send RGB as MQTT command, e.g. "rgb:255,165,0"
             const rgb = color.rgb;
             const rgbCmd = `rgb:${rgb.r},${rgb.g},${rgb.b}`;
             if (typeof client !== 'undefined' && client.connected) {
