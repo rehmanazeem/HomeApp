@@ -20,15 +20,12 @@ const STRIP_SET_TOPIC = 'home/strip/set';
 document.addEventListener('DOMContentLoaded', function() {
     applyTheme(currentTheme);
 
-    // Initialize iro.js color wheel
-    if (window.Iro) {
-        const colorWheel = new Iro.ColorPicker("#colorWheel", {
+    // Initialize iro.js color wheel (simpler config)
+    if (window.iro) {
+        const colorWheel = new window.iro.ColorPicker("#colorWheel", {
             width: 180,
-            color: "#ff9900",
-            layout: [
-                { component: Iro.components.Wheel },
-                { component: Iro.components.Slider, options: { sliderType: 'value' } }
-            ]
+            color: "#ff9900"
+            // Remove layout property for compatibility
         });
 
         colorWheel.on('color:change', function(color) {
