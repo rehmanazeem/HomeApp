@@ -19,6 +19,27 @@ const STRIP_SET_TOPIC = 'home/strip/set';
 // --- Theme Initialization ---
 document.addEventListener('DOMContentLoaded', function() {
     applyTheme(currentTheme);
+
+    // Initialize iro.js color wheel
+    if (window.Iro) {
+        const colorWheel = new Iro.ColorPicker("#colorWheel", {
+            width: 180,
+            color: "#ff9900",
+            layout: [
+                { component: Iro.components.Wheel },
+                { component: Iro.components.Slider, options: { sliderType: 'value' } }
+            ]
+        });
+
+        colorWheel.on('color:change', function(color) {
+            // Send RGB as MQTT command, e.g. "rgb:255,165,0"
+            const rgb = color.rgb;
+            const rgbCmd = `rgb:${rgb.r},${rgb.g},${rgb.b}`;
+            if (typeof client !== 'undefined' && client.connected) {
+                client.publish(STRIP_SET_TOPIC, rgbCmd);
+            }
+        });
+    }
 });
 
 // --- Tab Switching ---
