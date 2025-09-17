@@ -91,80 +91,95 @@
         <main class="flex-1 p-4 md:p-6">
             <!-- Home Tab Content -->
             <div id="home-content" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 max-w-4xl">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
                     <!-- Relay 1 Widget -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                                    <span class="text-2xl">🔌</span>
+                    <div class="flex flex-col bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300 h-full min-h-[320px]">
+                        <!-- First Row: Header, Status, Toggle -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">🔌</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">Relay One</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400" id="relay1-status">Off</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="font-semibold text-gray-900 dark:text-white">Relay One</h3>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400" id="relay1-status">Off</p>
+                                <div class="toggle-switch" id="relay1Btn" tabindex="0" role="button" aria-pressed="false">
+                                    <div class="toggle-knob"></div>
                                 </div>
                             </div>
-                            <div class="toggle-switch" id="relay1Btn" tabindex="0" role="button" aria-pressed="false">
-                                <div class="toggle-knob"></div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                Last updated: <span id="relay1-time">Never</span>
                             </div>
                         </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                            Last updated: <span id="relay1-time">Never</span>
-                        </div>
+                        <!-- Second Row: Empty Space -->
+                        <div class="flex-1"></div>
                     </div>
                     
                     <!-- Relay 2 Widget -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                                    <span class="text-2xl">🔌</span>
+                    <div class="flex flex-col bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300 h-full min-h-[320px]">
+                        <!-- First Row: Header, Status, Toggle -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">🔌</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">Relay Two</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400" id="relay2-status">Off</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="font-semibold text-gray-900 dark:text-white">Relay Two</h3>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400" id="relay2-status">Off</p>
+                                <div class="toggle-switch" id="relay2Btn" tabindex="0" role="button" aria-pressed="false">
+                                    <div class="toggle-knob"></div>
                                 </div>
                             </div>
-                            <div class="toggle-switch" id="relay2Btn" tabindex="0" role="button" aria-pressed="false">
-                                <div class="toggle-knob"></div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                Last updated: <span id="relay2-time">Never</span>
                             </div>
                         </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                            Last updated: <span id="relay2-time">Never</span>
-                        </div>
+                        <!-- Second Row: Empty Space -->
+                        <div class="flex-1"></div>
                     </div>
-                </div>
-                
-                <!-- Strip Switch Widget -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
-                                <span class="text-2xl">💡</span>
+                    
+                    <!-- Strip Switch Widget -->
+                    <div class="flex flex-col bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300 h-full min-h-[320px]">
+                        <!-- First Row: Header, Status, Toggle -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl">💡</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">Strip Light</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400" id="strip-status">Off</p>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch" id="stripBtn" tabindex="0" role="button" aria-pressed="false">
+                                    <div class="toggle-knob"></div>
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="font-semibold text-gray-900 dark:text-white">Strip Light</h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400" id="strip-status">Off</p>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                Last updated: <span id="strip-time">Never</span>
                             </div>
                         </div>
-                        <div class="toggle-switch" id="stripBtn" tabindex="0" role="button" aria-pressed="false">
-                            <div class="toggle-knob"></div>
+                        <!-- Second Row: Centered Horizontal Color Tiles and Picker -->
+                        <div>
+                            <div class="flex justify-center items-center space-x-3 mt-6">
+                                <div id="color-tile-red" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#ef4444;" title="Red"></div>
+                                <div id="color-tile-white" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer border" style="background:#fff;" title="White"></div>
+                                <div id="color-tile-cyan" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#06b6d4;" title="Cyan"></div>
+                                <div id="color-tile-magenta" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#d946ef;" title="Magenta"></div>
+                                <div id="color-tile-green" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#22c55e;" title="Green"></div>
+                                <div id="color-tile-blue" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#2563eb;" title="Blue"></div>
+                            </div>
+                            <div class="mt-6 flex flex-col items-center">
+                                <div id="colorWheel"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                        Last updated: <span id="strip-time">Never</span>
-                    </div>
-                    <div class="flex space-x-2 mt-6">
-                        <div id="color-tile-red" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#ef4444;" title="Red"></div>
-                        <div id="color-tile-white" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer border" style="background:#fff;" title="White"></div>
-                        <div id="color-tile-cyan" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#06b6d4;" title="Cyan"></div>
-                        <div id="color-tile-magenta" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#d946ef;" title="Magenta"></div>
-                        <div id="color-tile-green" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#22c55e;" title="Green"></div>
-                        <div id="color-tile-blue" tabindex="0" role="button" class="w-8 h-8 rounded-lg cursor-pointer" style="background:#2563eb;" title="Blue"></div>
-                    </div>
-                    <!-- Add this inside your strip widget, below the color tiles -->
-                    <div class="mt-6 flex flex-col items-center">
-                        <div id="colorWheel"></div>
                     </div>
                 </div>
             </div>
