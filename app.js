@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const rgbCmd = `(${rgb.r},${rgb.g},${rgb.b})`;
             if (typeof client !== 'undefined' && client.connected) {
                 client.publish(STRIP_SET_TOPIC, rgbCmd);
+                console.log(`Published color: ${rgbCmd}`);
             }
         });
     } else {
