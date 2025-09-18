@@ -21,15 +21,23 @@ const STRIP_SET_TOPIC = 'home/strip/set';
 document.addEventListener('DOMContentLoaded', function() {
     applyTheme(currentTheme);
 
-    // Initialize iro.js color wheel (simpler config)
+    // --- Request strip state and color on load ---
+    if (typeof client !== 'undefined' && client.connected) {
+        client.publish(STRIP_SET_TOPIC, 'get');
+    } else {
+        // If MQTT not connected yet, send "get" after connect
+        window._requestStripOnConnect = true;
+    }
+
+    // Initialize iro.js color wheel
     if (window.iro) {
-        const colorWheel = new window.iro.ColorPicker("#colorWheel", {
+        window.colorWheel = new window.iro.ColorPicker("#colorWheel", {
             width: 180,
             color: "#ff9900"
-            // Remove layout property for compatibility
         });
 
         colorWheel.on('color:change', function(color) {
+            if (ignoreColorChange) return; // Prevent loop
             const rgb = color.rgb;
             const rgbCmd = `(${rgb.r},${rgb.g},${rgb.b})`;
             if (typeof client !== 'undefined' && client.connected) {
@@ -134,6 +142,7 @@ let relay1State = false;
 let relay2State = false;
 let stripState = false;
 let mqttConnected = false;
+let ignoreColorChange = false;
 
 // Only run MQTT logic if mqtt.js is loaded
 if (typeof mqtt !== 'undefined') {
@@ -148,7 +157,12 @@ if (typeof mqtt !== 'undefined') {
     client.on('connect', () => {
         mqttConnected = true;
         updateConnectionDot();
-        client.subscribe([RELAY1_STATE_TOPIC, RELAY2_STATE_TOPIC, STRIP_STATE_TOPIC]);
+        client.subscribe([RELAY1_STATE_TOPIC, RELAY2_STATE_TOPIC, STRIP_STATE_TOPIC, STRIP_COLOR_TOPIC]);
+        // --- Request strip state/color if not already sent ---
+        if (window._requestStripOnConnect) {
+            client.publish(STRIP_SET_TOPIC, 'get');
+            window._requestStripOnConnect = false;
+        }
     });
 
     client.on('reconnect', () => {
@@ -181,6 +195,25 @@ if (typeof mqtt !== 'undefined') {
         if (topic === STRIP_STATE_TOPIC) {
             stripState = (msg === 'ON');
             updateStripUI(stripState);
+        }
+        // --- Update color picker when color received ---
+        if (topic === STRIP_COLOR_TOPIC) {
+            try {
+                let rgb;
+                if (msg.startsWith('(')) {
+                    const parts = msg.replace(/[()]/g, '').split(',');
+                    rgb = { r: +parts[0], g: +parts[1], b: +parts[2] };
+                } else if (msg.startsWith('#')) {
+                    rgb = window.iro.Color.hexToRgb(msg);
+                }
+                if (window.colorWheel && rgb) {
+                    ignoreColorChange = true;
+                    window.colorWheel.color.rgb = rgb;
+                    ignoreColorChange = false;
+                }
+            } catch (e) {
+                console.error('Failed to parse strip color:', msg);
+            }
         }
     });
 
