@@ -261,16 +261,23 @@ if (typeof mqtt !== 'undefined') {
     }
 
     // --- Color Tiles Logic ---
-    const colorCommands = ['red', 'white', 'cyan', 'magenta', 'green', 'blue'];
-    colorCommands.forEach(color => {
+    const colorCommands = {
+        red:    '(255,0,0)',
+        white:  '(255,255,255)',
+        cyan:   '(0,255,255)',
+        magenta:'(255,0,255)',
+        green:  '(0,255,0)',
+        blue:   '(0,0,255)'
+    };
+    Object.entries(colorCommands).forEach(([color, rgbCmd]) => {
         const tile = document.getElementById(`color-tile-${color}`);
         if (tile) {
             tile.onclick = function() {
-                client.publish(STRIP_SET_TOPIC, color);
+                client.publish(STRIP_SET_TOPIC, rgbCmd);
             };
             tile.onkeydown = function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
-                    client.publish(STRIP_SET_TOPIC, color);
+                    client.publish(STRIP_SET_TOPIC, rgbCmd);
                 }
             };
         }
