@@ -14,6 +14,7 @@ const RELAY2_SET_TOPIC = 'home/relay2/set';
 
 // --- Added Strip Topics ---
 const STRIP_STATE_TOPIC = 'home/strip/state';
+const STRIP_COLOR_TOPIC = 'home/strip/color';
 const STRIP_SET_TOPIC = 'home/strip/set';
 
 // --- Theme Initialization ---
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         colorWheel.on('color:change', function(color) {
             const rgb = color.rgb;
-            const rgbCmd = `rgb:${rgb.r},${rgb.g},${rgb.b}`;
+            const rgbCmd = `(${rgb.r},${rgb.g},${rgb.b})`;
             if (typeof client !== 'undefined' && client.connected) {
                 client.publish(STRIP_SET_TOPIC, rgbCmd);
             }
